@@ -1,0 +1,1 @@
+This directory contains the Custom Resource Definitions (CRDs) from [network-operator](https://github.com/ironcore-dev/network-operator) licensed under [Apache 2.0](https://github.com/ironcore-dev/network-operator/blob/main/LICENSE) for testing purposes.

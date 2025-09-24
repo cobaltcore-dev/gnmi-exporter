@@ -1,0 +1,46 @@
+skip-verify: true
+encoding: json
+log: true
+
+clustering:
+  cluster-name: {{ .Name }}
+  targets-watch-timer: 30s
+  leader-wait-timer: 30s
+  locker:
+    type: k8s
+    namespace: {{ .Namespace }}
+
+targets:
+  {{- range .Targets }}
+  {{ .Name }}:
+    address: {{ .Address }}
+    username: {{ .Username }}
+    password: {{ .Password }}
+  {{- end }}
+
+subscriptions:
+  {{- range .Subscriptions }}
+  {{ .Name }}:
+    paths:
+      {{- range .Paths }}
+      - {{ . }}
+      {{- end }}
+    {{- if gt (len .Models) 0 }}
+    models:
+      {{- range .Models }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+    mode: {{ .Mode.Config }}
+    {{- if eq .Mode "Stream" }}
+    stream-mode: {{ .StreamMode.Config }}
+      {{- if eq .StreamMode "Sample" }}
+    sample-interval: {{ .SampleInterval.Duration.String }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+outputs:
+  prom:
+    type: prometheus
+    strings-as-labels: true

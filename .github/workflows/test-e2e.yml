@@ -1,0 +1,62 @@
+# SPDX-FileCopyrightText: 2025 SAP SE or an SAP affiliate company and CobaltCore contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+      - '*'
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  test-e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/ironcore-dev/*
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          check-latest: true
+          go-version: 1.25.1
+      - name: Setup Private Go Module Access via SSH Key
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.GO_MODULE_PRIVATE_KEY }}"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+          git config --global url."git@github.com:ironcore-dev".insteadOf "https://github.com/ironcore-dev"
+      - name: Fetch latest kubectl version
+        id: kubectl
+        run: |
+          KUBECTL_VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)
+          echo "version=$KUBECTL_VERSION" >> $GITHUB_OUTPUT
+      - name: Fetch latest kind version
+        id: kind
+        run: |
+          KIND_VERSION=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
+          echo "version=$KIND_VERSION" >> $GITHUB_OUTPUT
+      - name: Create k8s kind cluster
+        uses: helm/kind-action@v1
+        with:
+          version: ${{ steps.kind.outputs.version }}
+          cluster_name: kind
+          kubectl_version: ${{ steps.kubectl.outputs.version }}
+      - name: Running E2E Tests
+        run: |
+          go mod tidy
+          GITHUB_TOKEN= make test-e2e

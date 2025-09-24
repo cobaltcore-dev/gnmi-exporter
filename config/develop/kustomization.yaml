@@ -1,0 +1,10 @@
+resources:
+- ../default
+- ../prometheus
+- crd/networking.cloud.sap_devices.yaml
+
+patches:
+ - path: manager_patch.yaml
+   target:
+     kind: Deployment
+     name: controller-manager

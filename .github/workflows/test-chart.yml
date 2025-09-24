@@ -1,0 +1,104 @@
+# SPDX-FileCopyrightText: 2025 SAP SE or an SAP affiliate company and CobaltCore contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+      - '*'
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  test-chart:
+    name: Chart
+    runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/ironcore-dev/*
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          check-latest: true
+          go-version: 1.25.1
+      - name: Setup Private Go Module Access via SSH Key
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.GO_MODULE_PRIVATE_KEY }}"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+          git config --global url."git@github.com:ironcore-dev".insteadOf "https://github.com/ironcore-dev"
+      - name: Fetch latest kubectl version
+        id: kubectl
+        run: |
+          KUBECTL_VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)
+          echo "version=$KUBECTL_VERSION" >> $GITHUB_OUTPUT
+      - name: Fetch latest kind version
+        id: kind
+        run: |
+          KIND_VERSION=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
+          echo "version=$KIND_VERSION" >> $GITHUB_OUTPUT
+      - name: Create k8s kind cluster
+        uses: helm/kind-action@v1
+        with:
+          version: ${{ steps.kind.outputs.version }}
+          cluster_name: kind
+          kubectl_version: ${{ steps.kubectl.outputs.version }}
+      - name: Prepare monitoring-operator
+        run: |
+          go mod tidy
+          GITHUB_TOKEN= make docker-build IMG=monitoring-operator:v0.1.0
+          kind load docker-image monitoring-operator:v0.1.0
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - name: Verify Helm installation
+        run: helm version
+      - name: Lint Helm Chart
+        run: |
+          helm lint ./charts/monitoring-operator
+# TODO: Uncomment if cert-manager is enabled
+#      - name: Install cert-manager via Helm
+#        run: |
+#          helm repo add jetstack https://charts.jetstack.io
+#          helm repo update
+#          helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set installCRDs=true
+#      - name: Wait for cert-manager to be ready
+#        run: |
+#          kubectl wait --namespace cert-manager --for=condition=available --timeout=300s deployment/cert-manager
+#          kubectl wait --namespace cert-manager --for=condition=available --timeout=300s deployment/cert-manager-cainjector
+#          kubectl wait --namespace cert-manager --for=condition=available --timeout=300s deployment/cert-manager-webhook
+      - name: Install Prometheus Operator CRDs
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm install prometheus-crds prometheus-community/prometheus-operator-crds
+      - name: Install Prometheus via Helm
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm install prometheus prometheus-community/prometheus --namespace monitoring --create-namespace
+      - name: Wait for Prometheus to be ready
+        run: |
+          kubectl wait --namespace monitoring --for=condition=available --timeout=300s deployment/prometheus-server
+      - name: Install Helm chart for project
+        run: |
+          helm install my-release ./charts/monitoring-operator --create-namespace --namespace monitoring-operator-system --set prometheus.enable=true
+      - name: Check Helm release status
+        run: |
+          helm status my-release --namespace monitoring-operator-system
+      - name: Check Presence of ServiceMonitor
+        run: |
+          kubectl wait --namespace monitoring-operator-system --for=jsonpath='{.kind}'=ServiceMonitor servicemonitor/monitoring-operator-controller-manager-metrics-monitor
