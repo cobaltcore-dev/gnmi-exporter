@@ -584,7 +584,7 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 
 // BasicAuth loads the username and password from the referenced secret resource.
 // The secret must by of type 'kubernetes.io/basic-auth' and contain the fields 'username' and 'password'.
-func (r *DeviceMonitorReconciler) BasicAuth(ctx context.Context, defaultNamespace string, ref *corev1.SecretReference) (user, pass []byte, err error) {
+func (r *DeviceMonitorReconciler) BasicAuth(ctx context.Context, defaultNamespace string, ref *networkv1alpha1.SecretReference) (user, pass []byte, err error) {
 	key := client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}
 	if key.Namespace == "" {
 		key.Namespace = defaultNamespace
