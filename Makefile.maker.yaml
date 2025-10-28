@@ -46,7 +46,6 @@ githubWorkflow:
     defaultBranch: main
   ci:
     enabled: true
-    coveralls: false
     prepareMakeTarget: generate
   license:
     enabled: true

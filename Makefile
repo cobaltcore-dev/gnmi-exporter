@@ -156,7 +156,7 @@ install-addlicense: FORCE
 	@if ! hash addlicense 2>/dev/null; then printf "\e[1;36m>> Installing addlicense (this may take a while)...\e[0m\n"; go install github.com/google/addlicense@latest; fi
 
 install-reuse: FORCE
-	@if ! hash reuse 2>/dev/null; then if ! hash pip3 2>/dev/null; then printf "\e[1;31m>> Cannot install reuse because no pip3 was found. Either install it using your package manager or install pip3\e[0m\n"; else printf "\e[1;36m>> Installing reuse...\e[0m\n"; pip3 install --user reuse; fi; fi
+	@if ! hash reuse 2>/dev/null; then if ! hash pipx 2>/dev/null; then printf "\e[1;31m>> You are required to manually intervene to install reuse as go-makefile-maker cannot automatically resolve installing reuse on all setups.\e[0m\n"; printf "\e[1;31m>> The preferred way for go-makefile-maker to install python tools after nix-shell is pipx which could not be found. Either install pipx using your package manager or install reuse using your package manager if at least version 6 is available.\e[0m\n"; printf "\e[1;31m>> As your Python was likely installed by your package manager, just doing pip install --user sadly does no longer work as pip issues a warning about breaking your system. Generally running --break-system-packages with --user is safe to do but you should only run this command if you can resolve issues with it yourself: pip3 install --user --break-system-packages reuse\e[0m\n"; else printf "\e[1;36m>> Installing reuse...\e[0m\n"; pipx install reuse; fi; fi
 
 prepare-static-check: FORCE install-golangci-lint install-modernize install-shellcheck install-go-licence-detector install-addlicense install-reuse
 
@@ -215,6 +215,7 @@ generate: install-controller-gen
 	@printf "\e[1;36m>> controller-gen\e[0m\n"
 	@controller-gen crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 	@controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	@controller-gen applyconfiguration paths="./..."
 
 run-golangci-lint: FORCE install-golangci-lint
 	@printf "\e[1;36m>> golangci-lint\e[0m\n"
@@ -231,7 +232,7 @@ run-shellcheck: FORCE install-shellcheck
 
 build/cover.out: FORCE generate install-setup-envtest | build
 	@printf "\e[1;36m>> Running tests\e[0m\n"
-	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.33 -p path) go run github.com/onsi/ginkgo/v2/ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=monitoring-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTFLAGS) $(GO_TESTPKGS)
+	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.34 -p path) go run github.com/onsi/ginkgo/v2/ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=monitoring-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTFLAGS) $(GO_TESTPKGS)
 	@awk < build/coverprofile.out '$$1 != "mode:" { is_filename[$$1] = true; counts1[$$1]+=$$2; counts2[$$1]+=$$3 } END { for (filename in is_filename) { printf "%s %d %d\n", filename, counts1[filename], counts2[filename]; } }' | sort | $(SED) '1s/^/mode: count\n/' > $@
 
 build/cover.html: build/cover.out
