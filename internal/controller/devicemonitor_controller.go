@@ -8,11 +8,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"embed"
-	"errors"
 	"fmt"
 	"maps"
 	"text/template"
-	"time"
 
 	networkv1alpha1 "github.com/ironcore-dev/network-operator/api/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -57,10 +55,6 @@ type DeviceMonitorReconciler struct {
 	// Recorder is used to record events for the controller.
 	// More info: https://book.kubebuilder.io/reference/raising-events
 	Recorder record.EventRecorder
-
-	// RequeueAfter is the duration to wait before requeuing the reconciliation
-	// to check for status changes in child resources.
-	RequeueAfter time.Duration
 
 	// GNMIcImage is the container image to use for the gNMIc StatefulSet.
 	GNMIcImage string
@@ -143,10 +137,6 @@ func (r *DeviceMonitorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DeviceMonitorReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	if r.RequeueAfter == 0 {
-		return errors.New("RequeueAfter must be set")
-	}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.DeviceMonitor{}).
 		Named("devicemonitor").

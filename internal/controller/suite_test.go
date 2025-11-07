@@ -100,10 +100,9 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).NotTo(BeNil())
 
 	err = (&DeviceMonitorReconciler{
-		Client:       k8sManager.GetClient(),
-		Scheme:       k8sManager.GetScheme(),
-		Recorder:     recorder,
-		RequeueAfter: 250 * time.Millisecond,
+		Client:   k8sManager.GetClient(),
+		Scheme:   k8sManager.GetScheme(),
+		Recorder: recorder,
 	}).SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
