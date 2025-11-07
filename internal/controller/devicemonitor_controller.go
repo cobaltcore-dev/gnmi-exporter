@@ -61,6 +61,9 @@ type DeviceMonitorReconciler struct {
 	// RequeueAfter is the duration to wait before requeuing the reconciliation
 	// to check for status changes in child resources.
 	RequeueAfter time.Duration
+
+	// GNMIcImage is the container image to use for the gNMIc StatefulSet.
+	GNMIcImage string
 }
 
 // +kubebuilder:rbac:groups=monitoring.networking.cloud.sap,resources=devicemonitors,verbs=get;list;watch;create;update;patch;delete
@@ -393,7 +396,7 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 			sts.Spec.Template.Spec.Containers = make([]corev1.Container, 1)
 		}
 		sts.Spec.Template.Spec.Containers[0].Name = "gnmic"
-		sts.Spec.Template.Spec.Containers[0].Image = "ghcr.io/openconfig/gnmic:0.42.0"
+		sts.Spec.Template.Spec.Containers[0].Image = r.GNMIcImage
 		sts.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
 		sts.Spec.Template.Spec.Containers[0].Args = []string{"subscribe", "--config", "/etc/gnmic/config.yaml"}
 		sts.Spec.Template.Spec.ServiceAccountName = sa.Name
