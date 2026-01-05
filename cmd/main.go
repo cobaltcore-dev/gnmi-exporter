@@ -197,10 +197,10 @@ func main() {
 	}
 
 	if err := (&controller.DeviceMonitorReconciler{
-		Client:       mgr.GetClient(),
-		Scheme:       mgr.GetScheme(),
-		Recorder:     mgr.GetEventRecorderFor("devicemonitor-controller"),
-		GNMIcImage:   gnmicImage,
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		Recorder:   mgr.GetEventRecorderFor("devicemonitor-controller"),
+		GNMIcImage: gnmicImage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DeviceMonitor")
 		os.Exit(1)

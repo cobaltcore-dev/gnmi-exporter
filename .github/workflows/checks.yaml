@@ -22,30 +22,18 @@ jobs:
   checks:
     name: Checks
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/ironcore-dev/*
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           check-latest: true
-          go-version: 1.25.3
-      - name: Setup Private Go Module Access via SSH Key
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.GO_MODULE_PRIVATE_KEY }}"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
-          git config --global url."git@github.com:ironcore-dev".insteadOf "https://github.com/ironcore-dev"
+          go-version: 1.25.5
       - name: Run prepare make target
         run: make generate
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
       - name: Delete pre-installed shellcheck
@@ -55,13 +43,11 @@ jobs:
       - name: Dependency Licenses Review
         run: make check-dependency-licenses
       - name: Check for spelling errors
-        uses: reviewdog/action-misspell@v1
-        with:
-          exclude: ./vendor/*
-          fail_on_error: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          ignore: importas
-          reporter: github-check
+        uses: crate-ci/typos@v1
+        env:
+          CLICOLOR: "1"
+      - name: Delete typos binary
+        run: rm typos
       - name: Check if source code files have license header
         run: make check-addlicense
       - name: Install govulncheck

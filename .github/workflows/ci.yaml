@@ -25,26 +25,14 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/ironcore-dev/*
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           check-latest: true
-          go-version: 1.25.3
-      - name: Setup Private Go Module Access via SSH Key
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.GO_MODULE_PRIVATE_KEY }}"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
-          git config --global url."git@github.com:ironcore-dev".insteadOf "https://github.com/ironcore-dev"
+          go-version: 1.25.5
       - name: Run prepare make target
         run: make generate
       - name: Build all binaries
@@ -55,21 +43,9 @@ jobs:
     needs:
       - test
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/ironcore-dev/*
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
-      - name: Setup Private Go Module Access via SSH Key
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.GO_MODULE_PRIVATE_KEY }}"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
-          git config --global url."git@github.com:ironcore-dev".insteadOf "https://github.com/ironcore-dev"
+        uses: actions/checkout@v6
       - name: Post coverage report
         uses: fgrosse/go-coverage-report@v1.2.0
         with:
@@ -84,32 +60,20 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/ironcore-dev/*
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           check-latest: true
-          go-version: 1.25.3
-      - name: Setup Private Go Module Access via SSH Key
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.GO_MODULE_PRIVATE_KEY }}"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
-          git config --global url."git@github.com:ironcore-dev".insteadOf "https://github.com/ironcore-dev"
+          go-version: 1.25.5
       - name: Run prepare make target
         run: make generate
       - name: Run tests and generate coverage report
         run: make build/cover.out
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: code-coverage
           path: build/cover.out
