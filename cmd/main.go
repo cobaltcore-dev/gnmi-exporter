@@ -6,6 +6,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -16,9 +17,8 @@ import (
 	// Set runtime concurrency to match CPU limit imposed by Kubernetes
 	_ "go.uber.org/automaxprocs"
 
-	networkv1alpha1 "github.com/ironcore-dev/network-operator/api/v1alpha1"
+	networkv1alpha1 "github.com/ironcore-dev/network-operator/api/core/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/sapcc/go-api-declarations/bininfo"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -40,6 +40,10 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	version   = "dev"
+	gitCommit = "none"
+	buildDate = "unknown"
 )
 
 func init() {
@@ -51,8 +55,13 @@ func init() {
 }
 
 func main() {
-	// if called with `--version`, report version and exit
-	bininfo.HandleVersionArgument()
+	if len(os.Args) > 1 && (os.Args[1] == "version" || os.Args[1] == "--version" || os.Args[1] == "-v") {
+		log.SetFlags(0)
+		log.Printf("Version:   %s", version)
+		log.Printf("Git Commit: %s", gitCommit)
+		log.Printf("Build Date: %s", buildDate)
+		os.Exit(0)
+	}
 
 	var metricsAddr string
 	var metricsCertPath, metricsCertName, metricsCertKey string
@@ -199,7 +208,7 @@ func main() {
 	if err := (&controller.DeviceMonitorReconciler{
 		Client:     mgr.GetClient(),
 		Scheme:     mgr.GetScheme(),
-		Recorder:   mgr.GetEventRecorderFor("devicemonitor-controller"),
+		Recorder:   mgr.GetEventRecorder("devicemonitor-controller"),
 		GNMIcImage: gnmicImage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DeviceMonitor")

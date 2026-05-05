@@ -4,8 +4,8 @@ log: true
 
 clustering:
   cluster-name: {{ .Name }}
-  targets-watch-timer: 30s
-  leader-wait-timer: 30s
+  targets-watch-timer: 5s
+  leader-wait-timer: 5s
   locker:
     type: k8s
     namespace: {{ .Namespace }}

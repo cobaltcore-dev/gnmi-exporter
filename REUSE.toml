@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and CobaltCore contributors
+# SPDX-License-Identifier: Apache-2.0
+
 version = 1
 SPDX-PackageName = "monitoring-operator"
 SPDX-PackageSupplier = "Felix Kästner <felix.kaester@sap.com>"

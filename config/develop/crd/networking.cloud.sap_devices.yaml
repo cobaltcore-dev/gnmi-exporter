@@ -3,14 +3,16 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
-  name: devices.networking.cloud.sap
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: devices.networking.metal.ironcore.dev
 spec:
-  group: networking.cloud.sap
+  group: networking.metal.ironcore.dev
   names:
     kind: Device
     listKind: DeviceList
     plural: devices
+    shortNames:
+    - dev
     singular: device
   scope: Namespaced
   versions:
@@ -34,6 +36,10 @@ spec:
       name: FirmwareVersion
       priority: 1
       type: string
+    - jsonPath: .status.lastRebootTime
+      name: RebootTime
+      priority: 1
+      type: date
     - jsonPath: .status.portSummary
       name: Ports
       priority: 1
@@ -43,6 +49,10 @@ spec:
       type: string
     - jsonPath: .status.conditions[?(@.type=="Ready")].status
       name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Paused")].status
+      name: Paused
+      priority: 1
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -74,91 +84,13 @@ spec:
               Specification of the desired state of the resource.
               More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
             properties:
-              bootstrap:
-                description: |-
-                  Bootstrap is an optional configuration for the device bootstrap process.
-                  It can be used to provide initial configuration templates or scripts that are applied during the device provisioning.
-                properties:
-                  template:
-                    description: Template defines the multiline string template that
-                      contains the initial configuration for the device.
-                    properties:
-                      configMapRef:
-                        description: Reference to a ConfigMap containing the template
-                        properties:
-                          key:
-                            description: |-
-                              Key is the of the entry in the configmap resource's `data` or `binaryData`
-                              field to be used.
-                            maxLength: 253
-                            minLength: 1
-                            type: string
-                          name:
-                            description: Name is unique within a namespace to reference
-                              a configmap resource.
-                            maxLength: 253
-                            minLength: 1
-                            type: string
-                          namespace:
-                            description: |-
-                              Namespace defines the space within which the configmap name must be unique.
-                              If omitted, the namespace of the object being reconciled will be used.
-                            maxLength: 63
-                            minLength: 1
-                            type: string
-                        required:
-                        - key
-                        - name
-                        type: object
-                        x-kubernetes-map-type: atomic
-                      inline:
-                        description: Inline template content
-                        minLength: 1
-                        type: string
-                      secretRef:
-                        description: Reference to a Secret containing the template
-                        properties:
-                          key:
-                            description: |-
-                              Key is the of the entry in the secret resource's `data` or `stringData`
-                              field to be used.
-                            maxLength: 253
-                            minLength: 1
-                            type: string
-                          name:
-                            description: Name is unique within a namespace to reference
-                              a secret resource.
-                            maxLength: 253
-                            minLength: 1
-                            type: string
-                          namespace:
-                            description: |-
-                              Namespace defines the space within which the secret name must be unique.
-                              If omitted, the namespace of the object being reconciled will be used.
-                            maxLength: 63
-                            minLength: 1
-                            type: string
-                        required:
-                        - key
-                        - name
-                        type: object
-                        x-kubernetes-map-type: atomic
-                    type: object
-                    x-kubernetes-validations:
-                    - message: exactly one of 'inline', 'secretRef', or 'configMapRef'
-                        must be specified
-                      rule: '[has(self.inline), has(self.secretRef), has(self.configMapRef)].filter(x,
-                        x).size() == 1'
-                required:
-                - template
-                type: object
               endpoint:
                 description: Endpoint contains the connection information for the
                   device.
                 properties:
                   address:
                     description: Address is the management address of the device provided
-                      as <ip:port>.
+                      in IP:Port format.
                     pattern: ^(\d{1,3}\.){3}\d{1,3}:\d{1,5}$
                     type: string
                   secretRef:
@@ -254,6 +186,115 @@ spec:
                 x-kubernetes-validations:
                 - message: SecretRef is required once set
                   rule: '!has(oldSelf.secretRef) || has(self.secretRef)'
+              paused:
+                default: false
+                description: Paused can be used to prevent controllers from processing
+                  the Device and its associated objects.
+                type: boolean
+              provisioning:
+                description: |-
+                  Provisioning is an optional configuration for the device provisioning process.
+                  It can be used to provide initial configuration templates or scripts that are applied during the device provisioning.
+                properties:
+                  bootScript:
+                    description: BootScript defines the script delivered by a TFTP
+                      server to the device during bootstrapping.
+                    properties:
+                      configMapRef:
+                        description: Reference to a ConfigMap containing the template
+                        properties:
+                          key:
+                            description: |-
+                              Key is the of the entry in the configmap resource's `data` or `binaryData`
+                              field to be used.
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          name:
+                            description: Name is unique within a namespace to reference
+                              a configmap resource.
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          namespace:
+                            description: |-
+                              Namespace defines the space within which the configmap name must be unique.
+                              If omitted, the namespace of the object being reconciled will be used.
+                            maxLength: 63
+                            minLength: 1
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      inline:
+                        description: Inline template content
+                        minLength: 1
+                        type: string
+                      secretRef:
+                        description: Reference to a Secret containing the template
+                        properties:
+                          key:
+                            description: |-
+                              Key is the of the entry in the secret resource's `data` or `stringData`
+                              field to be used.
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          name:
+                            description: Name is unique within a namespace to reference
+                              a secret resource.
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          namespace:
+                            description: |-
+                              Namespace defines the space within which the secret name must be unique.
+                              If omitted, the namespace of the object being reconciled will be used.
+                            maxLength: 63
+                            minLength: 1
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
+                    x-kubernetes-validations:
+                    - message: exactly one of 'inline', 'secretRef', or 'configMapRef'
+                        must be specified
+                      rule: '[has(self.inline), has(self.secretRef), has(self.configMapRef)].filter(x,
+                        x).size() == 1'
+                  image:
+                    description: Image defines the image to be used for provisioning
+                      the device.
+                    properties:
+                      checksum:
+                        description: |-
+                          Checksum is the checksum of the image for verification.
+                          kubebuilder:validation:MinLength=1
+                        type: string
+                      checksumType:
+                        default: MD5
+                        description: ChecksumType is the type of the checksum (e.g.,
+                          sha256, md5).
+                        enum:
+                        - SHA256
+                        - MD5
+                        type: string
+                      url:
+                        description: URL is the location of the image to be used for
+                          provisioning.
+                        type: string
+                    required:
+                    - checksum
+                    - checksumType
+                    - url
+                    type: object
+                required:
+                - image
+                type: object
             required:
             - endpoint
             type: object
@@ -328,6 +369,11 @@ spec:
                 description: FirmwareVersion is the firmware version running on the
                   Device.
                 type: string
+              lastRebootTime:
+                description: LastRebootTime is the timestamp of the last reboot of
+                  the Device, if known.
+                format: date-time
+                type: string
               manufacturer:
                 description: Manufacturer is the manufacturer of the Device.
                 type: string
@@ -340,11 +386,12 @@ spec:
                 enum:
                 - Pending
                 - Provisioning
-                - Active
+                - Running
                 - Failed
+                - Provisioned
                 type: string
               portSummary:
-                description: PostSummary shows a summary of the port configured, grouped
+                description: PortSummary shows a summary of the port configured, grouped
                   by type, e.g. "1/4 (10g), 3/64 (100g)".
                 type: string
               ports:
@@ -388,6 +435,32 @@ spec:
                   - name
                   type: object
                 type: array
+              provisioning:
+                description: Provisioning is the list of provisioning attempts for
+                  the Device.
+                items:
+                  properties:
+                    endTime:
+                      format: date-time
+                      type: string
+                    error:
+                      type: string
+                    reboot:
+                      format: date-time
+                      type: string
+                    startTime:
+                      format: date-time
+                      type: string
+                    token:
+                      type: string
+                  required:
+                  - startTime
+                  - token
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - startTime
+                x-kubernetes-list-type: map
               serialNumber:
                 description: SerialNumber is the serial number of the Device.
                 type: string

@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "@mermaid-js/mermaid-mindmap": "^9.3.0",
+    "prettier": "^3.8.3",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.10"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev .",
+    "docs:build": "vitepress build .",
+    "docs:preview": "vitepress preview .",
+    "fmt:fix": "prettier --write ."
+  }
+}

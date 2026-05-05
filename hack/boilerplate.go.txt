@@ -1,2 +1,2 @@
-// SPDX-FileCopyrightText: 2025 SAP SE or an SAP affiliate company and CobaltCore contributors
+// SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and CobaltCore contributors
 // SPDX-License-Identifier: Apache-2.0

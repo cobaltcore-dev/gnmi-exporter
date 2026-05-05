@@ -136,7 +136,8 @@ var _ = Describe("Manager", Ordered, func() {
 			By("validating that the controller-manager pod is running as expected")
 			verifyControllerUp := func(g Gomega) {
 				// Get the name of the controller-manager pod
-				cmd := exec.Command("kubectl", "get",
+				cmd := exec.Command(
+					"kubectl", "get",
 					"pods", "-l", "control-plane=controller-manager",
 					"-o", "go-template={{ range .items }}"+
 						"{{ if not .metadata.deletionTimestamp }}"+
@@ -271,7 +272,7 @@ func serviceAccountToken() (string, error) {
 
 	// Temporary file to store the token request
 	secretName := serviceAccountName + "-token-request"
-	tokenRequestFile := filepath.Join("/tmp", secretName)
+	tokenRequestFile := filepath.Join(os.TempDir(), secretName)
 	err := os.WriteFile(tokenRequestFile, []byte(tokenRequestRawString), os.FileMode(0o644))
 	if err != nil {
 		return "", err

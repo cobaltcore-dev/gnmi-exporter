@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // DeviceMonitorSpec defines the desired state of DeviceMonitor
@@ -249,5 +250,8 @@ type DeviceMonitorList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&DeviceMonitor{}, &DeviceMonitorList{})
+	SchemeBuilder.Register(func(s *runtime.Scheme) error {
+		s.AddKnownTypes(GroupVersion, &DeviceMonitor{}, &DeviceMonitorList{})
+		return nil
+	})
 }

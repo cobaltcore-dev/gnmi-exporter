@@ -12,12 +12,12 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	networkv1alpha1 "github.com/ironcore-dev/network-operator/api/v1alpha1"
+	networkv1alpha1 "github.com/ironcore-dev/network-operator/api/core/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -87,7 +87,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	recorder := record.NewFakeRecorder(0)
+	recorder := events.NewFakeRecorder(0)
 	go func() {
 		for event := range recorder.Events {
 			GinkgoLogr.Info("Event", "event", event)

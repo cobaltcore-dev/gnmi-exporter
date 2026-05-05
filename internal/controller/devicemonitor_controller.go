@@ -12,7 +12,7 @@ import (
 	"maps"
 	"text/template"
 
-	networkv1alpha1 "github.com/ironcore-dev/network-operator/api/v1alpha1"
+	networkv1alpha1 "github.com/ironcore-dev/network-operator/api/core/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -54,7 +54,7 @@ type DeviceMonitorReconciler struct {
 
 	// Recorder is used to record events for the controller.
 	// More info: https://book.kubebuilder.io/reference/raising-events
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 
 	// GNMIcImage is the container image to use for the gNMIc StatefulSet.
 	GNMIcImage string
@@ -64,9 +64,9 @@ type DeviceMonitorReconciler struct {
 // +kubebuilder:rbac:groups=monitoring.networking.cloud.sap,resources=devicemonitors/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=monitoring.networking.cloud.sap,resources=devicemonitors/finalizers,verbs=update
 
-// +kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=events.k8s.io,resources=events,verbs=create;patch
 
-// +kubebuilder:rbac:groups=networking.cloud.sap,resources=devices,verbs=get;list;watch
+// +kubebuilder:rbac:groups=networking.metal.ironcore.dev,resources=devices,verbs=get;list;watch
 
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch
@@ -138,20 +138,23 @@ func (r *DeviceMonitorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 // SetupWithManager sets up the controller with the Manager.
 func (r *DeviceMonitorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.DeviceMonitor{}).
+		For(&v1alpha1.DeviceMonitor{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Named("devicemonitor").
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
 		Owns(&corev1.Secret{}).
-		Owns(&appsv1.StatefulSet{}).
-		Owns(&corev1.Service{}).
-		Owns(&monitoringv1.ServiceMonitor{}).
+		Owns(&appsv1.StatefulSet{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&corev1.Service{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&monitoringv1.ServiceMonitor{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		// Watches enqueues DeviceMonitors for referenced Device resources.
+		// Triggers on spec changes (GenerationChangedPredicate) since the controller reads
+		// Spec.Endpoint, and on label changes (LabelChangedPredicate) since labels are
+		// matched against the DeviceMonitor selector to determine the target set.
 		Watches(
 			&networkv1alpha1.Device{},
 			handler.EnqueueRequestsFromMapFunc(r.devicesToDeviceMonitor),
-			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+			builder.WithPredicates(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{})),
 		).
 		Complete(r)
 }
@@ -167,7 +170,7 @@ func (r *DeviceMonitorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // 6. Create a Service to expose the gnmic-api (for clustering) of the gnmic StatefulSet.
 // 7. Create a Service to expose the prometheus metrics collected by the gnmic StatefulSet.
 // 8. Create a ServiceMonitor to scrape metrics from the Service.
-func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.DeviceMonitor) (reterr error) {
+func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.DeviceMonitor) (reterr error) { //nolint:gocyclo
 	log := ctrl.LoggerFrom(ctx)
 
 	labels := map[string]string{
@@ -191,7 +194,7 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 
 	if len(devices.Items) == 0 {
 		log.Info(fmt.Sprintf("No devices found matching selector %v", m.Spec.Selector))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "NoDevices", "No devices found matching selector %v", m.Spec.Selector)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "NoDevices", "Reconcile", "No devices found matching selector %v", m.Spec.Selector)
 
 		// Cleanup any existing resources since there are no devices to monitor
 		obj := []client.Object{
@@ -219,7 +222,7 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 				continue
 			}
 
-			r.Recorder.Eventf(m, corev1.EventTypeNormal, "Deleted", "Deleted %s %s/%s", o.GetObjectKind().GroupVersionKind().Kind, o.GetNamespace(), o.GetName())
+			r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Deleted", "Reconcile", "Deleted %s %s/%s", o.GetObjectKind().GroupVersionKind().Kind, o.GetNamespace(), o.GetName())
 		}
 		if len(errs) > 0 {
 			return kerrors.NewAggregate(errs)
@@ -254,11 +257,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update ServiceAccount", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update ServiceAccount: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "ServiceAccount %s/%s: %v", sa.Namespace, sa.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "ServiceAccount %s/%s: %v", sa.Namespace, sa.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "ServiceAccount %s/%s %s", sa.Namespace, sa.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "ServiceAccount %s/%s %s", sa.Namespace, sa.Name, res)
 	}
 
 	ro := &rbacv1.Role{}
@@ -283,11 +286,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update Role", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update Role: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "Role %s/%s: %v", ro.Namespace, ro.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "Role %s/%s: %v", ro.Namespace, ro.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "Role %s/%s %s", ro.Namespace, ro.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "Role %s/%s %s", ro.Namespace, ro.Name, res)
 	}
 
 	rb := &rbacv1.RoleBinding{}
@@ -312,11 +315,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update RoleBinding", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update RoleBinding: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "RoleBinding %s/%s: %v", rb.Namespace, rb.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "RoleBinding %s/%s: %v", rb.Namespace, rb.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "RoleBinding %s/%s %s", rb.Namespace, rb.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "RoleBinding %s/%s %s", rb.Namespace, rb.Name, res)
 	}
 
 	// checksum of the gnmic config.yaml data stored in the Secret.
@@ -354,11 +357,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update Secret", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update Secret: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "Secret %s/%s: %v", s.Namespace, s.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "Secret %s/%s: %v", s.Namespace, s.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "Secret %s/%s %s", s.Namespace, s.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "Secret %s/%s %s", s.Namespace, s.Name, res)
 	}
 
 	sts := &appsv1.StatefulSet{}
@@ -391,13 +394,13 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 		sts.Spec.Template.Spec.Containers[0].Args = []string{"subscribe", "--config", "/etc/gnmic/config.yaml"}
 		sts.Spec.Template.Spec.ServiceAccountName = sa.Name
 		sts.Spec.Template.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
-			AllowPrivilegeEscalation: ptr.To(false),
+			AllowPrivilegeEscalation: new(false),
 			Capabilities: &corev1.Capabilities{
 				Drop: []corev1.Capability{"ALL"},
 			},
-			ReadOnlyRootFilesystem: ptr.To(true),
-			RunAsNonRoot:           ptr.To(true),
-			RunAsUser:              ptr.To(int64(1000)),
+			ReadOnlyRootFilesystem: new(true),
+			RunAsNonRoot:           new(true),
+			RunAsUser:              new(int64(1000)),
 		}
 		sts.Spec.Template.Spec.Containers[0].Ports = []corev1.ContainerPort{
 			{
@@ -481,11 +484,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update StatefulSet", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update StatefulSet: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "StatefulSet %s/%s: %v", sts.Namespace, sts.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "StatefulSet %s/%s: %v", sts.Namespace, sts.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "StatefulSet %s/%s %s", sts.Namespace, sts.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "StatefulSet %s/%s %s", sts.Namespace, sts.Name, res)
 	}
 
 	// GNMI expects a dedicated service that only has a single port 7890/TCP for the clustering API.
@@ -510,11 +513,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update Service", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update Service: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "Service %s/%s: %v", svc.Namespace, svc.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "Service %s/%s: %v", svc.Namespace, svc.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "Service %s/%s %s", svc.Namespace, svc.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "Service %s/%s %s", svc.Namespace, svc.Name, res)
 	}
 
 	svc = &corev1.Service{}
@@ -537,11 +540,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update Service", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update Service: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "Service %s/%s: %v", svc.Namespace, svc.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "Service %s/%s: %v", svc.Namespace, svc.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "Service %s/%s %s", svc.Namespace, svc.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "Service %s/%s %s", svc.Namespace, svc.Name, res)
 	}
 
 	sm := &monitoringv1.ServiceMonitor{}
@@ -564,11 +567,11 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	if err != nil {
 		log.Error(err, "Failed to create or update ServiceMonitor", "result", res)
 		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update ServiceMonitor: %v", err))
-		r.Recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "ServiceMonitor %s/%s: %v", sm.Namespace, sm.Name, err)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "ServiceMonitor %s/%s: %v", sm.Namespace, sm.Name, err)
 		return err
 	}
 	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, corev1.EventTypeNormal, "Reconciled", "ServiceMonitor %s/%s %s", sm.Namespace, sm.Name, res)
+		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "ServiceMonitor %s/%s %s", sm.Namespace, sm.Name, res)
 	}
 
 	m.SetReadyCondition(metav1.ConditionTrue, v1alpha1.ReadyCondition, "All owned resources are ready")

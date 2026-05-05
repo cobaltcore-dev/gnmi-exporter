@@ -5,10 +5,24 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-monitoring}"
+CONTAINER_TOOL="${CONTAINER_TOOL:-docker}"
+KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
+export KIND_EXPERIMENTAL_PROVIDER="${CONTAINER_TOOL}"
+
+ROOTDIR=$(cd -- "$(dirname -- "$0")/.." && pwd)
+
+# Use local kind binary if available, otherwise fall back to global installation
+if [ -x "$ROOTDIR/bin/kind" ]; then
+  KIND="$ROOTDIR/bin/kind"
+elif command -v kind &>/dev/null; then
+  KIND="kind"
+else
+  echo "Error: kind not found. Install it globally or run 'make kind' to download it locally."
+  exit 1
+fi
 
 # Exit early if the cluster already exists
-if kind get clusters | grep -q "^${KIND_CLUSTER_NAME}$"; then
+if $KIND get clusters | grep -q "^${KIND_CLUSTER_NAME}$"; then
   echo "Cluster ${KIND_CLUSTER_NAME} already exists"
   exit 0
 fi
@@ -16,21 +30,12 @@ fi
 # 1. Create registry container unless it already exists
 REGISTRY_NAME='kind-registry'
 REGISTRY_PORT="${KIND_REGISTRY_PORT:-5000}"
-if [ "$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)" != 'true' ]; then
-  docker run -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:5000" --network bridge --name "${REGISTRY_NAME}" registry:2
+if [ "$("${CONTAINER_TOOL}" inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)" != 'true' ]; then
+  "${CONTAINER_TOOL}" run -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:5000" --network bridge --name "${REGISTRY_NAME}" registry:3
 fi
 
-# 2. Create kind cluster with containerd registry config dir enabled
-#
-# NOTE: the containerd config patch is not necessary with images from kind v0.27.0+
-# It may enable some older images to work similarly.
-# If you're only supporting newer releases, you can just use `kind create cluster` here.
-#
-# See:
-# https://github.com/kubernetes-sigs/kind/issues/2875
-# https://github.com/containerd/containerd/blob/main/docs/cri/config.md#registry-configuration
-# See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
-cat <<EOF | kind create cluster --config=-
+# 2. Create kind cluster
+cat <<EOF | $KIND create cluster --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: ${KIND_CLUSTER_NAME}
@@ -38,10 +43,6 @@ nodes:
 - role: control-plane
   labels:
     topology.kubernetes.io/zone: eu-de-1a
-containerdConfigPatches:
-- |-
-  [plugins."io.containerd.grpc.v1.cri".registry]
-    config_path = "/etc/containerd/certs.d"
 EOF
 
 # 3. Add the registry config to the nodes
@@ -53,17 +54,17 @@ EOF
 # We want a consistent name that works from both ends, so we tell containerd to
 # alias localhost:${reg_port} to the registry container when pulling images
 REGISTRY_DIR="/etc/containerd/certs.d/localhost:${REGISTRY_PORT}"
-for node in $(kind get nodes); do
-  docker exec "${node}" mkdir -p "${REGISTRY_DIR}"
-  cat <<EOF | docker exec -i "${node}" cp /dev/stdin "${REGISTRY_DIR}/hosts.toml"
+for node in $($KIND get nodes); do
+  "${CONTAINER_TOOL}" exec "${node}" mkdir -p "${REGISTRY_DIR}"
+  cat <<EOF | "${CONTAINER_TOOL}" exec -i "${node}" cp /dev/stdin "${REGISTRY_DIR}/hosts.toml"
 [host."http://${REGISTRY_NAME}:5000"]
 EOF
 done
 
 # 4. Connect the registry to the cluster network if not already connected
 # This allows kind to bootstrap the network but ensures they're on the same network
-if [ "$(docker inspect -f='{{json .NetworkSettings.Networks.kind}}' "${REGISTRY_NAME}")" = 'null' ]; then
-  docker network connect "kind" "${REGISTRY_NAME}"
+if [ "$("${CONTAINER_TOOL}" inspect -f='{{json .NetworkSettings.Networks.kind}}' "${REGISTRY_NAME}")" = 'null' ]; then
+  "${CONTAINER_TOOL}" network connect "kind" "${REGISTRY_NAME}"
 fi
 
 # 5. Document the local registry
