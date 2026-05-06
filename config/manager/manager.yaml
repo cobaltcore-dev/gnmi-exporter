@@ -63,7 +63,7 @@ spec:
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
-        image: ghcr.io/cobaltcore-dev/monitoring-operator:latest
+        image: controller:latest
         imagePullPolicy: IfNotPresent
         name: manager
         ports: []

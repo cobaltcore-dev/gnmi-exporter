@@ -16,7 +16,7 @@ manager:
   replicas: 1
 
   image:
-    repository: controller
+    repository: ghcr.io/cobaltcore-dev/monitoring-operator
     tag: latest
     pullPolicy: IfNotPresent
 
