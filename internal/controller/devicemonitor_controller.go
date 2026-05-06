@@ -27,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/events"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -474,7 +473,7 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
 						SecretName:  s.Name,
-						DefaultMode: ptr.To[int32](0o440),
+						DefaultMode: new(int32(0o440)),
 					},
 				},
 			},
