@@ -22,7 +22,7 @@ It's highly recommended to watch the following Talk on [Improving Network Observ
 
 ### Prerequisites
 
-- go version v1.25.0+
+- go version v1.26.0+
 - docker version 28+.
 - kubectl version v1.33.1+.
 - Access to a Kubernetes v1.33.0+ cluster.
