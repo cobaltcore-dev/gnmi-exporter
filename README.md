@@ -29,10 +29,10 @@ It's highly recommended to watch the following Talk on [Improving Network Observ
 
 ### To Deploy on the cluster
 
-**Build and push your image to the location specified by `IMG`:**
+**Build your image to the tag specified by `IMG`:**
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/monitoring-operator:tag
+make docker-build IMG=<some-registry>/monitoring-operator:tag
 ```
 
 **NOTE:** This image ought to be published in the personal registry you specified. And it is required to have access to pull the image from the working environment. Make sure you have the proper permission to the registry if the above commands don’t work.
@@ -40,7 +40,7 @@ make docker-build docker-push IMG=<some-registry>/monitoring-operator:tag
 **Install the CRDs into the cluster:**
 
 ```sh
-make deploy-crds
+make install
 ```
 
 **Deploy the Manager to the cluster with the image specified by `IMG`:**
@@ -71,7 +71,7 @@ kubectl delete -k config/samples/
 **Delete the APIs(CRDs) from the cluster:**
 
 ```sh
-make undeploy-crds
+make uninstall
 ```
 
 **UnDeploy the controller from the cluster:**
