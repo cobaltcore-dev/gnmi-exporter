@@ -180,7 +180,9 @@ docker-build: ## Build docker image with the manager.
 .PHONY: build-installer
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	@if ! grep -q "image: $(IMG)" config/manager/manager.yaml; then \
+		cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG); \
+	fi
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
 ##@ Deployment
@@ -199,7 +201,9 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster. Call with
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	@if ! grep -q "image: $(IMG)" config/manager/manager.yaml; then \
+		cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG); \
+	fi
 	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
