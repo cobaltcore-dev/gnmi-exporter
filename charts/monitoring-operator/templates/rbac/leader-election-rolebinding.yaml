@@ -14,5 +14,5 @@ roleRef:
   name: {{ include "monitoring-operator.resourceName" (dict "suffix" "leader-election-role" "context" $) }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "controller-manager" "context" $) }}
+  name: {{ include "monitoring-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}

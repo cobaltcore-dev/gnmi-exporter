@@ -105,7 +105,7 @@ local_resource("controller-gen", "make generate", deps=["api/", "hack/boilerplat
 
 local_resource("crds", "make install", deps=["api/"])
 
-docker_build("controller:latest", ".", only=[
+docker_build("ghcr.io/cobaltcore-dev/monitoring-operator:latest", ".", only=[
     "api/", "cmd/", "internal/", "go.mod", "go.sum"
 ])
 
