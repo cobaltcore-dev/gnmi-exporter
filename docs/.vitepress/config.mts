@@ -5,7 +5,6 @@ import { fileURLToPath, URL } from 'node:url'
 export default withMermaid({
     title: 'Monitoring Operator',
     description: 'Cloud Native Network Device Monitoring',
-    base: "/monitoring-operator/",
     head: [
         [
             'link',
