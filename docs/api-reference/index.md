@@ -50,6 +50,7 @@ _Appears in:_
 | `template` _[PodTemplateSpec](#podtemplatespec)_ | Template describes the gnmic pods that will be created. |  | Required: \{\} <br /> |
 | `subscriptions` _[Subscription](#subscription) array_ | Subscriptions is a list of gNMI subscriptions to be created. |  | MinItems: 1 <br />Required: \{\} <br /> |
 | `encoding` _[Encoding](#encoding)_ | Encoding represents the encoding format for gNMI messages.<br />Supported values are "json" and "json_ietf".<br />Defaults to "json_ietf". | json_ietf | Enum: [json json_ietf] <br />Optional: \{\} <br /> |
+| `metrics` _[MetricsSpec](#metricsspec)_ | Metrics configures Prometheus metrics collection and ServiceMonitor<br />creation. If omitted, the metrics Service receives only<br />operator-generated labels and no ServiceMonitor is created. |  | Optional: \{\} <br /> |
 
 
 #### DeviceMonitorStatus
@@ -84,6 +85,24 @@ _Appears in:_
 | --- | --- |
 | `json` | EncodingJSON represents JSON encoding format.<br /> |
 | `json_ietf` | EncodingJSONIETF represents JSON IETF encoding format.<br /> |
+
+
+#### MetricsSpec
+
+
+
+MetricsSpec configures Prometheus metrics scraping and ServiceMonitor
+creation.
+
+
+
+_Appears in:_
+- [DeviceMonitorSpec](#devicemonitorspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `additionalLabels` _object (keys:string, values:string)_ | AdditionalLabels are extra labels merged onto the operator-managed<br />metrics Service. They do not override operator-generated labels.<br />Use this to make the Service discoverable by an external ServiceMonitor. |  | MaxProperties: 64 <br />Optional: \{\} <br /> |
+| `serviceMonitor` _[ServiceMonitorSpec](#servicemonitorspec)_ | ServiceMonitor configures the Prometheus ServiceMonitor resource.<br />If present, the operator creates and manages a ServiceMonitor.<br />If omitted, no ServiceMonitor is created. |  | Optional: \{\} <br /> |
 
 
 #### Mode
@@ -138,6 +157,43 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.35/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
 | `spec` _[PodSpec](#podspec)_ | Specification of the desired behavior of the pod.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status |  | Optional: \{\} <br /> |
+
+
+#### PrometheusDuration
+
+_Underlying type:_ _string_
+
+PrometheusDuration is a valid time duration that can be parsed by Prometheus.
+Supported units: y, w, d, h, m, s, ms.
+Examples: "30s", "1m", "5m30s".
+
+_Validation:_
+- MaxLength: 64
+- Pattern: `^([0-9]+(y|w|d|h|m|s|ms))+$`
+- Type: string
+
+_Appears in:_
+- [ServiceMonitorSpec](#servicemonitorspec)
+
+
+
+#### ServiceMonitorSpec
+
+
+
+ServiceMonitorSpec defines configuration for the operator-managed
+ServiceMonitor resource.
+
+
+
+_Appears in:_
+- [MetricsSpec](#metricsspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `additionalLabels` _object (keys:string, values:string)_ | AdditionalLabels are extra labels merged onto the ServiceMonitor<br />metadata. Use this to match the serviceMonitorSelector on a<br />Prometheus CR. |  | MaxProperties: 64 <br />Optional: \{\} <br /> |
+| `interval` _[PrometheusDuration](#prometheusduration)_ | Interval at which Prometheus scrapes the metrics endpoint.<br />If empty, Prometheus uses its configured global scrape interval. |  | MaxLength: 64 <br />Pattern: `^([0-9]+(y\|w\|d\|h\|m\|s\|ms))+$` <br />Type: string <br />Optional: \{\} <br /> |
+| `scrapeTimeout` _[PrometheusDuration](#prometheusduration)_ | ScrapeTimeout is the per-scrape timeout when querying the metrics<br />endpoint. Must be less than or equal to Interval.<br />If empty, Prometheus uses its configured global scrape timeout. |  | MaxLength: 64 <br />Pattern: `^([0-9]+(y\|w\|d\|h\|m\|s\|ms))+$` <br />Type: string <br />Optional: \{\} <br /> |
 
 
 #### StreamMode

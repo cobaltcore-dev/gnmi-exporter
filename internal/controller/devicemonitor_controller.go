@@ -161,14 +161,15 @@ func (r *DeviceMonitorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // reconcile handles the main reconciliation logic for the DeviceMonitor resource.
 //
 // It performs the following steps:
-// 1. Create a ServiceAccount for the gnmic StatefulSet.
-// 2. Create a Role with the necessary permissions for the gnmic StatefulSet.
-// 3. Create a RoleBinding to bind the Role to the ServiceAccount.
-// 4. Create a Secret to store the gnmic configuration.
-// 5. Create a StatefulSet running gnmic to collect metrics from the devices.
-// 6. Create a Service to expose the gnmic-api (for clustering) of the gnmic StatefulSet.
-// 7. Create a Service to expose the prometheus metrics collected by the gnmic StatefulSet.
-// 8. Create a ServiceMonitor to scrape metrics from the Service.
+//  1. Create a ServiceAccount for the gnmic StatefulSet.
+//  2. Create a Role with the necessary permissions for the gnmic StatefulSet.
+//  3. Create a RoleBinding to bind the Role to the ServiceAccount.
+//  4. Create a Secret to store the gnmic configuration.
+//  5. Create a StatefulSet running gnmic to collect metrics from the devices.
+//  6. Create a Service to expose the gnmic-api (for clustering) of the gnmic StatefulSet.
+//  7. Create a Service to expose the prometheus metrics collected by the gnmic StatefulSet.
+//  8. Optionally create a ServiceMonitor if spec.metrics.serviceMonitor is set,
+//     or clean up an existing one if it was removed from the spec.
 func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.DeviceMonitor) (reterr error) { //nolint:gocyclo
 	log := ctrl.LoggerFrom(ctx)
 
@@ -524,6 +525,9 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	svc.Namespace = m.Namespace
 	res, err = controllerutil.CreateOrPatch(ctx, r.Client, svc, func() error {
 		ensureLabels(svc, labels)
+		if m.Spec.Metrics != nil {
+			ensureLabels(svc, m.Spec.Metrics.AdditionalLabels)
+		}
 		svc.Spec.Selector = labels
 		svc.Spec.Ports = []corev1.ServicePort{
 			{
@@ -546,31 +550,53 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "Service %s/%s %s", svc.Namespace, svc.Name, res)
 	}
 
-	sm := &monitoringv1.ServiceMonitor{}
-	sm.Name = m.Name
-	sm.Namespace = m.Namespace
-	res, err = controllerutil.CreateOrPatch(ctx, r.Client, sm, func() error {
-		ensureLabels(sm, labels)
-		sm.Spec.Selector = metav1.LabelSelector{MatchLabels: labels}
-		sm.Spec.Endpoints = []monitoringv1.Endpoint{
-			{
+	if m.Spec.Metrics != nil && m.Spec.Metrics.ServiceMonitor != nil {
+		sm := &monitoringv1.ServiceMonitor{}
+		sm.Name = m.Name
+		sm.Namespace = m.Namespace
+		res, err = controllerutil.CreateOrPatch(ctx, r.Client, sm, func() error {
+			ensureLabels(sm, labels)
+			ensureLabels(sm, m.Spec.Metrics.ServiceMonitor.AdditionalLabels)
+			sm.Spec.Selector = metav1.LabelSelector{MatchLabels: labels}
+			endpoint := monitoringv1.Endpoint{
 				Port: "http",
 				Path: "/metrics",
-			},
+			}
+			if m.Spec.Metrics.ServiceMonitor.Interval != "" {
+				endpoint.Interval = m.Spec.Metrics.ServiceMonitor.Interval
+			}
+			if m.Spec.Metrics.ServiceMonitor.ScrapeTimeout != "" {
+				endpoint.ScrapeTimeout = m.Spec.Metrics.ServiceMonitor.ScrapeTimeout
+			}
+			sm.Spec.Endpoints = []monitoringv1.Endpoint{endpoint}
+			sm.Spec.NamespaceSelector = monitoringv1.NamespaceSelector{
+				MatchNames: []string{m.Namespace},
+			}
+			return controllerutil.SetControllerReference(m, sm, r.Scheme)
+		})
+		if err != nil {
+			log.Error(err, "Failed to create or update ServiceMonitor", "result", res)
+			m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update ServiceMonitor: %v", err))
+			r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "ServiceMonitor %s/%s: %v", sm.Namespace, sm.Name, err)
+			return err
 		}
-		sm.Spec.NamespaceSelector = monitoringv1.NamespaceSelector{
-			MatchNames: []string{m.Namespace},
+		if res != controllerutil.OperationResultNone {
+			r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "ServiceMonitor %s/%s %s", sm.Namespace, sm.Name, res)
 		}
-		return controllerutil.SetControllerReference(m, sm, r.Scheme)
-	})
-	if err != nil {
-		log.Error(err, "Failed to create or update ServiceMonitor", "result", res)
-		m.SetReadyCondition(metav1.ConditionFalse, v1alpha1.NotReadyReason, fmt.Sprintf("Failed to create or update ServiceMonitor: %v", err))
-		r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "ServiceMonitor %s/%s: %v", sm.Namespace, sm.Name, err)
-		return err
-	}
-	if res != controllerutil.OperationResultNone {
-		r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Reconciled", "Reconcile", "ServiceMonitor %s/%s %s", sm.Namespace, sm.Name, res)
+	} else {
+		// Clean up orphaned ServiceMonitor if it exists
+		sm := &monitoringv1.ServiceMonitor{}
+		sm.Name = m.Name
+		sm.Namespace = m.Namespace
+		err := r.Delete(ctx, sm)
+		switch {
+		case err != nil && !apierrors.IsNotFound(err):
+			log.Error(err, "Failed to delete orphaned ServiceMonitor")
+			r.Recorder.Eventf(m, nil, corev1.EventTypeWarning, "ReconcileError", "Reconcile", "ServiceMonitor %s/%s: %v", sm.Namespace, sm.Name, err)
+			return err
+		case err == nil:
+			r.Recorder.Eventf(m, nil, corev1.EventTypeNormal, "Deleted", "Reconcile", "ServiceMonitor %s/%s deleted (no longer configured)", sm.Namespace, sm.Name)
+		}
 	}
 
 	m.SetReadyCondition(metav1.ConditionTrue, v1alpha1.ReadyCondition, "All owned resources are ready")

@@ -107,6 +107,51 @@ spec:
                 - json
                 - json_ietf
                 type: string
+              metrics:
+                description: |-
+                  Metrics configures Prometheus metrics collection and ServiceMonitor
+                  creation. If omitted, the metrics Service receives only
+                  operator-generated labels and no ServiceMonitor is created.
+                properties:
+                  additionalLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      AdditionalLabels are extra labels merged onto the operator-managed
+                      metrics Service. They do not override operator-generated labels.
+                      Use this to make the Service discoverable by an external ServiceMonitor.
+                    maxProperties: 64
+                    type: object
+                  serviceMonitor:
+                    description: |-
+                      ServiceMonitor configures the Prometheus ServiceMonitor resource.
+                      If present, the operator creates and manages a ServiceMonitor.
+                      If omitted, no ServiceMonitor is created.
+                    properties:
+                      additionalLabels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          AdditionalLabels are extra labels merged onto the ServiceMonitor
+                          metadata. Use this to match the serviceMonitorSelector on a
+                          Prometheus CR.
+                        maxProperties: 64
+                        type: object
+                      interval:
+                        description: |-
+                          Interval at which Prometheus scrapes the metrics endpoint.
+                          If empty, Prometheus uses its configured global scrape interval.
+                        pattern: ^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$
+                        type: string
+                      scrapeTimeout:
+                        description: |-
+                          ScrapeTimeout is the per-scrape timeout when querying the metrics
+                          endpoint. Must be less than or equal to Interval.
+                          If empty, Prometheus uses its configured global scrape timeout.
+                        pattern: ^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$
+                        type: string
+                    type: object
+                type: object
               replicas:
                 default: 1
                 description: Number of desired monitoring pods. Defaults to 1.

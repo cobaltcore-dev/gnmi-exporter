@@ -44,6 +44,12 @@ var _ = Describe("DeviceMonitor Controller", func() {
 							},
 						},
 						Encoding: v1alpha1.EncodingJSONIETF,
+					Metrics: &v1alpha1.MetricsSpec{
+						ServiceMonitor: &v1alpha1.ServiceMonitorSpec{
+							AdditionalLabels: map[string]string{"prometheus": "infra"},
+							Interval:         "30s",
+						},
+					},
 					},
 				}
 				Expect(k8sClient.Create(ctx, m)).To(Succeed())

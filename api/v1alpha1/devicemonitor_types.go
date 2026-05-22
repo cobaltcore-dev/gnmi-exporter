@@ -4,6 +4,7 @@
 package v1alpha1
 
 import (
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +40,12 @@ type DeviceMonitorSpec struct {
 	// +kubebuilder:default="json_ietf"
 	// +optional
 	Encoding Encoding `json:"encoding,omitempty"`
+
+	// Metrics configures Prometheus metrics collection and ServiceMonitor
+	// creation. If omitted, the metrics Service receives only
+	// operator-generated labels and no ServiceMonitor is created.
+	// +optional
+	Metrics *MetricsSpec `json:"metrics,omitempty"`
 }
 
 // PodTemplateSpec describes the additional data a pod should have.
@@ -185,6 +192,45 @@ const (
 	// EncodingJSONIETF represents JSON IETF encoding format.
 	EncodingJSONIETF Encoding = "json_ietf"
 )
+
+// MetricsSpec configures Prometheus metrics scraping and ServiceMonitor
+// creation.
+type MetricsSpec struct {
+	// AdditionalLabels are extra labels merged onto the operator-managed
+	// metrics Service. They do not override operator-generated labels.
+	// Use this to make the Service discoverable by an external ServiceMonitor.
+	// +optional
+	// +kubebuilder:validation:MaxProperties=64
+	AdditionalLabels map[string]string `json:"additionalLabels,omitempty"`
+
+	// ServiceMonitor configures the Prometheus ServiceMonitor resource.
+	// If present, the operator creates and manages a ServiceMonitor.
+	// If omitted, no ServiceMonitor is created.
+	// +optional
+	ServiceMonitor *ServiceMonitorSpec `json:"serviceMonitor,omitempty"`
+}
+
+// ServiceMonitorSpec defines configuration for the operator-managed
+// ServiceMonitor resource.
+type ServiceMonitorSpec struct {
+	// AdditionalLabels are extra labels merged onto the ServiceMonitor
+	// metadata. Use this to match the serviceMonitorSelector on a
+	// Prometheus CR.
+	// +optional
+	// +kubebuilder:validation:MaxProperties=64
+	AdditionalLabels map[string]string `json:"additionalLabels,omitempty"`
+
+	// Interval at which Prometheus scrapes the metrics endpoint.
+	// If empty, Prometheus uses its configured global scrape interval.
+	// +optional
+	Interval monitoringv1.Duration `json:"interval,omitempty"`
+
+	// ScrapeTimeout is the per-scrape timeout when querying the metrics
+	// endpoint. Must be less than or equal to Interval.
+	// If empty, Prometheus uses its configured global scrape timeout.
+	// +optional
+	ScrapeTimeout monitoringv1.Duration `json:"scrapeTimeout,omitempty"`
+}
 
 // DeviceMonitorStatus defines the observed state of DeviceMonitor.
 type DeviceMonitorStatus struct {
