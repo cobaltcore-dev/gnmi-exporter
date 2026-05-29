@@ -3,7 +3,7 @@ module github.com/cobaltcore-dev/monitoring-operator
 go 1.26.0
 
 require (
-	github.com/ironcore-dev/network-operator v0.0.0-20260525083949-c0b0a8cac6d4
+	github.com/ironcore-dev/network-operator v0.0.0-20260527163005-e86e923347d8
 	github.com/onsi/ginkgo/v2 v2.29.0
 	github.com/onsi/gomega v1.41.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.91.0
