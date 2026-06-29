@@ -26,18 +26,18 @@ jobs:
           version: latest
       - name: Lint Helm Chart
         run: |
-          helm lint ./charts/monitoring-operator
+          helm lint ./charts/gnmi-exporter
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
           version: v0.31.0
           kubectl_version: v1.35.0
           cluster_name: kind
-      - name: Prepare monitoring-operator
+      - name: Prepare gnmi-exporter
         run: |
           go mod download
-          make docker-build IMG=monitoring-operator:v0.1.0
-          kind load docker-image monitoring-operator:v0.1.0
+          make docker-build IMG=gnmi-exporter:v0.1.0
+          kind load docker-image gnmi-exporter:v0.1.0
       - name: Install cert-manager via Helm
         run: |
           helm repo add jetstack https://charts.jetstack.io
@@ -63,10 +63,10 @@ jobs:
           kubectl wait --namespace monitoring --for=condition=available --timeout=300s deployment/prometheus-server
       - name: Install Helm Chart
         run: |
-          helm install monitoring-operator ./charts/monitoring-operator --create-namespace --namespace monitoring-operator-system --set manager.image.repository=monitoring-operator --set manager.image.tag=v0.1.0 --set prometheus.enable=true
+          helm install gnmi-exporter ./charts/gnmi-exporter --create-namespace --namespace gnmi-exporter-system --set manager.image.repository=gnmi-exporter --set manager.image.tag=v0.1.0 --set prometheus.enable=true
       - name: Check Helm release status
         run: |
-          helm status monitoring-operator --namespace monitoring-operator-system
+          helm status gnmi-exporter --namespace gnmi-exporter-system
       - name: Check Presence of ServiceMonitor
         run: |
-          kubectl wait --namespace monitoring-operator-system --for=jsonpath='{.kind}'=ServiceMonitor servicemonitor/monitoring-operator-controller-manager-metrics-monitor
+          kubectl wait --namespace gnmi-exporter-system --for=jsonpath='{.kind}'=ServiceMonitor servicemonitor/gnmi-exporter-controller-manager-metrics-monitor

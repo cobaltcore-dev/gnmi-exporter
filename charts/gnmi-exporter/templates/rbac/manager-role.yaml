@@ -8,7 +8,7 @@ metadata:
 {{- if .Values.rbac.namespaced }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "manager-role" "context" $) }}
+  name: {{ include "gnmi-exporter.resourceName" (dict "suffix" "manager-role" "context" $) }}
 rules:
 - apiGroups:
   - ""

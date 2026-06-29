@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/name: {{ include "monitoring-operator.name" . }}
+    app.kubernetes.io/name: {{ include "gnmi-exporter.name" . }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     control-plane: controller-manager
@@ -13,7 +13,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
     {{- end }}
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "controller-manager" "context" $) }}
+  name: {{ include "gnmi-exporter.resourceName" (dict "suffix" "controller-manager" "context" $) }}
   namespace: {{ .Release.Namespace }}
   {{- if .Values.manager.annotations }}
   annotations:
@@ -26,7 +26,7 @@ spec:
   replicas: {{ .Values.manager.replicas }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "monitoring-operator.name" . }}
+      app.kubernetes.io/name: {{ include "gnmi-exporter.name" . }}
       control-plane: controller-manager
   template:
     metadata:
@@ -40,7 +40,7 @@ spec:
         {{- end }}
         {{- end }}
       labels:
-        app.kubernetes.io/name: {{ include "monitoring-operator.name" . }}
+        app.kubernetes.io/name: {{ include "gnmi-exporter.name" . }}
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
@@ -131,7 +131,7 @@ spec:
         {{- else }}
         {}
         {{- end }}
-      serviceAccountName: {{ include "monitoring-operator.serviceAccountName" . }}
+      serviceAccountName: {{ include "gnmi-exporter.serviceAccountName" . }}
       {{- if and (hasKey .Values.manager "terminationGracePeriodSeconds") (ne .Values.manager.terminationGracePeriodSeconds nil) }}
       terminationGracePeriodSeconds: {{ .Values.manager.terminationGracePeriodSeconds }}
       {{- end }}

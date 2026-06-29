@@ -4,8 +4,8 @@
 
 FROM node:25-alpine3.22
 
-LABEL source_repository="https://github.com/cobaltcore-dev/monitoring-operator" \
-    org.opencontainers.image.url="https://github.com/cobaltcore-dev/monitoring-operator/tree/main/docs"
+LABEL source_repository="https://github.com/cobaltcore-dev/gnmi-exporter" \
+    org.opencontainers.image.url="https://github.com/cobaltcore-dev/gnmi-exporter/tree/main/docs"
 
 WORKDIR /workspace
 

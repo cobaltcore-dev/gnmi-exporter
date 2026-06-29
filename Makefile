@@ -62,7 +62,7 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 
 .PHONY: fmt
 fmt: goimports gofumpt ## Run goimports and gofumpt against code.
-	@$(GOIMPORTS) -w -local github.com/cobaltcore-dev/monitoring-operator $(shell git ls-files '*.go' | grep -E -v 'internal/provider/openconfig|zz_generated.deepcopy.go')
+	@$(GOIMPORTS) -w -local github.com/cobaltcore-dev/gnmi-exporter $(shell git ls-files '*.go' | grep -E -v 'internal/provider/openconfig|zz_generated.deepcopy.go')
 	@$(GOFUMPT) -l -w $(shell git ls-files '*.go' | grep -E -v 'internal/provider/openconfig|zz_generated.deepcopy.go')
 
 .PHONY: vet
@@ -77,7 +77,7 @@ test: manifests generate fmt vet setup-envtest ## Run tests.
 coverage: test ## Run tests and generate coverage report.
 	go tool cover -html=cover.out -o cover.html
 
-KIND_CLUSTER ?= monitoring-operator-test-e2e
+KIND_CLUSTER ?= gnmi-exporter-test-e2e
 
 .PHONY: setup-test-e2e
 setup-test-e2e: kind ## Set up a Kind cluster for e2e tests if it does not exist
@@ -147,7 +147,7 @@ docs: crd-ref-docs ## Generate API reference documentation.
 	$(CRD_REF_DOCS) --source-path=./api --config=./hack/api-reference/config.yaml --renderer=markdown --output-path=./docs/api-reference/index.md
 
 ROOT_DIR := $(shell pwd)
-DOCS_IMG ?= cobaltcore-dev/monitoring-operator-docs:latest
+DOCS_IMG ?= cobaltcore-dev/gnmi-exporter-docs:latest
 
 .PHONY: run-docs
 run-docs:
@@ -164,9 +164,9 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: helm
 helm: kubebuilder
-	@mv charts/monitoring-operator charts/chart
+	@mv charts/gnmi-exporter charts/chart
 	$(KUBEBUILDER) edit --plugins=helm/v2-alpha --output-dir=charts
-	@mv charts/chart charts/monitoring-operator && rm -rf dist
+	@mv charts/chart charts/gnmi-exporter && rm -rf dist
 
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
@@ -370,7 +370,7 @@ endef
 ## Tilt / Kind
 ## --------------------------------------
 
-KIND_CLUSTER_NAME ?= monitoring-operator
+KIND_CLUSTER_NAME ?= gnmi-exporter
 
 .PHONY: kind-create
 kind-create: kind ## Create the kind cluster if needed

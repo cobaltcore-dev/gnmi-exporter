@@ -3,16 +3,16 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/name: {{ include "monitoring-operator.name" . }}
+    app.kubernetes.io/name: {{ include "gnmi-exporter.name" . }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "leader-election-rolebinding" "context" $) }}
+  name: {{ include "gnmi-exporter.resourceName" (dict "suffix" "leader-election-rolebinding" "context" $) }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "leader-election-role" "context" $) }}
+  name: {{ include "gnmi-exporter.resourceName" (dict "suffix" "leader-election-role" "context" $) }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "monitoring-operator.serviceAccountName" . }}
+  name: {{ include "gnmi-exporter.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}

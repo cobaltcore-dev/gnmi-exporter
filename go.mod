@@ -1,4 +1,4 @@
-module github.com/cobaltcore-dev/monitoring-operator
+module github.com/cobaltcore-dev/gnmi-exporter
 
 go 1.26.0
 

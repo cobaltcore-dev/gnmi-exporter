@@ -46,10 +46,10 @@ jobs:
           echo "version=$CHART_VERSION" >> $GITHUB_OUTPUT
       - name: Set container image tag
         run: |
-          yq -i '.manager.image.tag = "sha-${{ github.sha }}"' charts/monitoring-operator/values.yaml
+          yq -i '.manager.image.tag = "sha-${{ github.sha }}"' charts/gnmi-exporter/values.yaml
       - name: Package Helm Chart
         run: |
-          helm package charts/monitoring-operator --version ${{ steps.chart_version.outputs.version }}
+          helm package charts/gnmi-exporter --version ${{ steps.chart_version.outputs.version }}
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         run: |
@@ -57,4 +57,4 @@ jobs:
       - name: Push Helm Chart to ghcr.io
         if: github.event_name != 'pull_request'
         run: |
-          helm push monitoring-operator-${{ steps.chart_version.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+          helm push gnmi-exporter-${{ steps.chart_version.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts

@@ -4,11 +4,11 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/name: {{ include "monitoring-operator.name" . }}
+    app.kubernetes.io/name: {{ include "gnmi-exporter.name" . }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     control-plane: controller-manager
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "controller-manager-metrics-service" "context" $) }}
+  name: {{ include "gnmi-exporter.resourceName" (dict "suffix" "controller-manager-metrics-service" "context" $) }}
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
@@ -17,6 +17,6 @@ spec:
     protocol: TCP
     targetPort: {{ .Values.metrics.port }}
   selector:
-    app.kubernetes.io/name: {{ include "monitoring-operator.name" . }}
+    app.kubernetes.io/name: {{ include "gnmi-exporter.name" . }}
     control-plane: controller-manager
 {{- end }}

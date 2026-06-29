@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "metrics-reader" "context" $) }}
+  name: {{ include "gnmi-exporter.resourceName" (dict "suffix" "metrics-reader" "context" $) }}
 rules:
 - nonResourceURLs:
   - /metrics

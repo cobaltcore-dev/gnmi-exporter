@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/cobaltcore-dev/monitoring-operator/api/v1alpha1"
+	"github.com/cobaltcore-dev/gnmi-exporter/api/v1alpha1"
 )
 
 //go:embed templates/*.tmpl
@@ -176,7 +176,7 @@ func (r *DeviceMonitorReconciler) reconcile(ctx context.Context, m *v1alpha1.Dev
 	labels := map[string]string{
 		"app.kubernetes.io/name":       m.Name,
 		"app.kubernetes.io/instance":   m.Name + "-" + string(m.UID),
-		"app.kubernetes.io/managed-by": "monitoring-operator",
+		"app.kubernetes.io/managed-by": "gnmi-exporter",
 		v1alpha1.DeviceMonitorLabel:    m.Name,
 	}
 

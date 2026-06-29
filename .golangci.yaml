@@ -265,7 +265,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/cobaltcore-dev/monitoring-operator
+        - github.com/cobaltcore-dev/gnmi-exporter
   exclusions:
     generated: lax
     paths:

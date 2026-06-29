@@ -11,17 +11,19 @@ metadata:
 {{- end }}
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/name: {{ include "monitoring-operator.name" . }}
+    app.kubernetes.io/name: {{ include "gnmi-exporter.name" . }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-  name: {{ include "monitoring-operator.resourceName" (dict "suffix" "devicemonitor-admin-role" "context" $) }}
+  name: {{ include "gnmi-exporter.resourceName" (dict "suffix" "devicemonitor-viewer-role" "context" $) }}
 rules:
 - apiGroups:
   - monitoring.networking.cloud.sap
   resources:
   - devicemonitors
   verbs:
-  - '*'
+  - get
+  - list
+  - watch
 - apiGroups:
   - monitoring.networking.cloud.sap
   resources:

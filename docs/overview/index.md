@@ -1,6 +1,6 @@
-# Monitoring Operator
+# Introduction
 
-Monitoring Operator is a Kubernetes operator for automating the monitoring of network devices. It deploys and manages [gnmic](https://gnmic.openconfig.net/) instances that collect gNMI streaming telemetry from network devices managed by [network-operator](https://github.com/ironcore-dev/network-operator).
+`gnmi-exporter` is a Kubernetes operator for automating the monitoring of network devices. It deploys and manages [gnmic](https://gnmic.openconfig.net/) instances that collect gNMI streaming telemetry from network devices managed by [network-operator](https://github.com/ironcore-dev/network-operator).
 
 ## How it works
 

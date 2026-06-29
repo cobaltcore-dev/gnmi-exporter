@@ -14,20 +14,20 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	utils "github.com/cobaltcore-dev/monitoring-operator/test/utils"
+	utils "github.com/cobaltcore-dev/gnmi-exporter/test/utils"
 )
 
 // namespace where the project is deployed in
-const namespace = "monitoring-operator-system"
+const namespace = "gnmi-exporter-system"
 
 // serviceAccountName created for the project
-const serviceAccountName = "monitoring-operator-controller-manager"
+const serviceAccountName = "gnmi-exporter-controller-manager"
 
 // metricsServiceName is the name of the metrics service of the project
-const metricsServiceName = "monitoring-operator-controller-manager-metrics-service"
+const metricsServiceName = "gnmi-exporter-controller-manager-metrics-service"
 
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
-const metricsRoleBindingName = "monitoring-operator-metrics-binding"
+const metricsRoleBindingName = "gnmi-exporter-metrics-binding"
 
 var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
@@ -165,7 +165,7 @@ var _ = Describe("Manager", Ordered, func() {
 		It("should ensure the metrics endpoint is serving metrics", func() {
 			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
 			// #nosec G204
-			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName, "--clusterrole=monitoring-operator-metrics-reader", fmt.Sprintf("--serviceaccount=%s:%s", namespace, serviceAccountName))
+			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName, "--clusterrole=gnmi-exporter-metrics-reader", fmt.Sprintf("--serviceaccount=%s:%s", namespace, serviceAccountName))
 			_, err := utils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred(), "Failed to create ClusterRoleBinding")
 
