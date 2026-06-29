@@ -77,7 +77,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - monitoring.networking.cloud.sap
+  - monitoring.wire.cobaltcore.dev
   resources:
   - devicemonitors
   verbs:
@@ -89,13 +89,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - monitoring.networking.cloud.sap
+  - monitoring.wire.cobaltcore.dev
   resources:
   - devicemonitors/finalizers
   verbs:
   - update
 - apiGroups:
-  - monitoring.networking.cloud.sap
+  - monitoring.wire.cobaltcore.dev
   resources:
   - devicemonitors/status
   verbs:

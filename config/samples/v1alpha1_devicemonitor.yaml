@@ -1,4 +1,4 @@
-apiVersion: monitoring.networking.cloud.sap/v1alpha1
+apiVersion: monitoring.wire.cobaltcore.dev/v1alpha1
 kind: DeviceMonitor
 metadata:
   labels:
@@ -28,7 +28,7 @@ spec:
       sampleInterval: 1s
   encoding: json
 ---
-apiVersion: networking.metal.ironcore.dev/v1alpha1
+apiVersion: wire.cobaltcore.dev/v1alpha1
 kind: Device
 metadata:
   labels:

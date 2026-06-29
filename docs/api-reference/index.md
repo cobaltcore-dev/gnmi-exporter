@@ -1,12 +1,12 @@
 # API Reference
 
 ## Packages
-- [monitoring.networking.cloud.sap/v1alpha1](#monitoringnetworkingcloudsapv1alpha1)
+- [monitoring.wire.cobaltcore.dev/v1alpha1](#monitoringwirecobaltcoredevv1alpha1)
 
 
-## monitoring.networking.cloud.sap/v1alpha1
+## monitoring.wire.cobaltcore.dev/v1alpha1
 
-Package v1alpha1 contains API Schema definitions for the monitoring.networking.cloud.sap v1alpha1 API group.
+Package v1alpha1 contains API Schema definitions for the monitoring.wire.cobaltcore.dev v1alpha1 API group.
 
 ### Resource Types
 - [DeviceMonitor](#devicemonitor)
@@ -25,7 +25,7 @@ DeviceMonitor is the Schema for the devicemonitors API
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `apiVersion` _string_ | `monitoring.networking.cloud.sap/v1alpha1` | | |
+| `apiVersion` _string_ | `monitoring.wire.cobaltcore.dev/v1alpha1` | | |
 | `kind` _string_ | `DeviceMonitor` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.35/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[DeviceMonitorSpec](#devicemonitorspec)_ | Specification of the desired state of the resource.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status |  | Required: \{\} <br /> |

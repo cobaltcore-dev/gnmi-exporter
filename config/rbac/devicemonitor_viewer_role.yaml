@@ -1,7 +1,7 @@
 # This rule is not used by the project gnmi-exporter itself.
 # It is provided to allow the cluster admin to help manage permissions for users.
 #
-# Grants read-only access to monitoring.networking.cloud.sap resources.
+# Grants read-only access to monitoring.wire.cobaltcore.dev resources.
 # This role is intended for users who need visibility into these resources
 # without permissions to modify them. It is ideal for monitoring purposes and limited-access viewing.
 
@@ -14,7 +14,7 @@ metadata:
   name: devicemonitor-viewer-role
 rules:
 - apiGroups:
-  - monitoring.networking.cloud.sap
+  - monitoring.wire.cobaltcore.dev
   resources:
   - devicemonitors
   verbs:
@@ -22,7 +22,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - monitoring.networking.cloud.sap
+  - monitoring.wire.cobaltcore.dev
   resources:
   - devicemonitors/status
   verbs:
