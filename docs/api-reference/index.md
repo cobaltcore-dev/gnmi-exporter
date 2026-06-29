@@ -159,24 +159,6 @@ _Appears in:_
 | `spec` _[PodSpec](#podspec)_ | Specification of the desired behavior of the pod.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status |  | Optional: \{\} <br /> |
 
 
-#### PrometheusDuration
-
-_Underlying type:_ _string_
-
-PrometheusDuration is a valid time duration that can be parsed by Prometheus.
-Supported units: y, w, d, h, m, s, ms.
-Examples: "30s", "1m", "5m30s".
-
-_Validation:_
-- MaxLength: 64
-- Pattern: `^([0-9]+(y|w|d|h|m|s|ms))+$`
-- Type: string
-
-_Appears in:_
-- [ServiceMonitorSpec](#servicemonitorspec)
-
-
-
 #### ServiceMonitorSpec
 
 
@@ -192,8 +174,8 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `additionalLabels` _object (keys:string, values:string)_ | AdditionalLabels are extra labels merged onto the ServiceMonitor<br />metadata. Use this to match the serviceMonitorSelector on a<br />Prometheus CR. |  | MaxProperties: 64 <br />Optional: \{\} <br /> |
-| `interval` _[PrometheusDuration](#prometheusduration)_ | Interval at which Prometheus scrapes the metrics endpoint.<br />If empty, Prometheus uses its configured global scrape interval. |  | MaxLength: 64 <br />Pattern: `^([0-9]+(y\|w\|d\|h\|m\|s\|ms))+$` <br />Type: string <br />Optional: \{\} <br /> |
-| `scrapeTimeout` _[PrometheusDuration](#prometheusduration)_ | ScrapeTimeout is the per-scrape timeout when querying the metrics<br />endpoint. Must be less than or equal to Interval.<br />If empty, Prometheus uses its configured global scrape timeout. |  | MaxLength: 64 <br />Pattern: `^([0-9]+(y\|w\|d\|h\|m\|s\|ms))+$` <br />Type: string <br />Optional: \{\} <br /> |
+| `interval` _[Duration](#duration)_ | Interval at which Prometheus scrapes the metrics endpoint.<br />If empty, Prometheus uses its configured global scrape interval. |  | Optional: \{\} <br /> |
+| `scrapeTimeout` _[Duration](#duration)_ | ScrapeTimeout is the per-scrape timeout when querying the metrics<br />endpoint. Must be less than or equal to Interval.<br />If empty, Prometheus uses its configured global scrape timeout. |  | Optional: \{\} <br /> |
 
 
 #### StreamMode
