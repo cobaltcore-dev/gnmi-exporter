@@ -24,7 +24,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/cobaltcore-dev/monitoring-operator/api/v1alpha1"
+	"github.com/cobaltcore-dev/gnmi-exporter/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 

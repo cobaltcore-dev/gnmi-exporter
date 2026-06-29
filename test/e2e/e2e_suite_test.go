@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	utils "github.com/cobaltcore-dev/monitoring-operator/test/utils"
+	utils "github.com/cobaltcore-dev/gnmi-exporter/test/utils"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 
 // image is the name of the image which will be build and loaded
 // with the code source changes to be tested.
-const image = "networking.cloud.sap/monitoring-operator:test"
+const image = "networking.cloud.sap/gnmi-exporter:test"
 
 // TestE2E runs the end-to-end (e2e) test suite for the project. These tests execute in an isolated,
 // temporary environment to validate project changes with the purposed to be used in CI jobs.
@@ -38,7 +38,7 @@ const image = "networking.cloud.sap/monitoring-operator:test"
 // CertManager and Prometheus Operator.
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
-	_, _ = fmt.Fprintf(GinkgoWriter, "Starting monitoring-operator integration test suite\n")
+	_, _ = fmt.Fprintf(GinkgoWriter, "Starting gnmi-exporter integration test suite\n")
 	RunSpecs(t, "e2e suite")
 }
 

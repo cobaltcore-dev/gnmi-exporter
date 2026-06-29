@@ -1,14 +1,16 @@
 # Quickstart
 
+Get the gNMI exporter running in your cluster and collecting network telemetry in minutes.
+
 ## Installation
 
 Install the monitoring operator using the Helm chart published as an OCI artifact.
 
-Available versions can be found at the [GitHub Container Registry](https://github.com/cobaltcore-dev/monitoring-operator/pkgs/container/charts%2Fmonitoring-operator).
+Available versions can be found at the [GitHub Container Registry](https://github.com/cobaltcore-dev/gnmi-exporter/pkgs/container/charts%2Fgnmi-exporter).
 
 ```bash
-helm install monitoring-operator \
-  oci://ghcr.io/cobaltcore-dev/charts/monitoring-operator \
+helm install gnmi-exporter \
+  oci://ghcr.io/cobaltcore-dev/charts/gnmi-exporter \
   --version 0.0.0-36c6d53 \
   --namespace monitoring-system \
   --create-namespace

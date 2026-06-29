@@ -3,7 +3,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
-    title: 'Monitoring Operator',
+    title: 'gNMI Exporter',
     description: 'Cloud Native Network Device Monitoring',
     head: [
         [
@@ -49,7 +49,7 @@ export default withMermaid({
         ],
 
         editLink: {
-            pattern: 'https://github.com/cobaltcore-dev/monitoring-operator/blob/main/docs/:path',
+            pattern: 'https://github.com/cobaltcore-dev/gnmi-exporter/blob/main/docs/:path',
             text: 'Edit this page on GitHub',
         },
 
@@ -78,6 +78,6 @@ export default withMermaid({
             },
         ],
 
-        socialLinks: [{ icon: 'github', link: 'https://github.com/cobaltcore-dev/monitoring-operator' }],
+        socialLinks: [{ icon: 'github', link: 'https://github.com/cobaltcore-dev/gnmi-exporter' }],
     },
 })

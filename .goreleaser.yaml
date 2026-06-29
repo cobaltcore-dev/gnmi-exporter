@@ -14,7 +14,7 @@ archives:
       - README.md
 
 builds:
-  - binary: 'monitoring-operator'
+  - binary: 'gnmi-exporter'
     env:
       - CGO_ENABLED=0
     goos:

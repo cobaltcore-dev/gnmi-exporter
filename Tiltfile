@@ -115,13 +115,13 @@ deploy_prometheus_operator()
 setup_monitoring()
 
 k8s_yaml(kustomize("config/develop"))
-k8s_resource("monitoring-operator-controller-manager", resource_deps=["controller-gen"])
+k8s_resource("gnmi-exporter-controller-manager", resource_deps=["controller-gen"])
 
 # Sample resources with manual trigger mode
 k8s_yaml("./config/samples/v1alpha1_devicemonitor.yaml")
 k8s_resource(new_name="DeviceMonitor", objects=["secret-basic-auth:secret", "leaf1:device", "devicemonitor-sample:devicemonitor"], trigger_mode=TRIGGER_MODE_MANUAL, auto_init=False)
 
-print("🚀 monitoring-operator development environment")
+print("🚀 gnmi-exporter development environment")
 print("👉 Edit the code inside the api/, cmd/, or internal/ directories")
 print("👉 Tilt will automatically rebuild and redeploy when changes are detected")
 # vim: ft=tiltfile syn=python

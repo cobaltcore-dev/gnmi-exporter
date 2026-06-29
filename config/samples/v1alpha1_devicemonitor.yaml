@@ -2,7 +2,7 @@ apiVersion: monitoring.networking.cloud.sap/v1alpha1
 kind: DeviceMonitor
 metadata:
   labels:
-    app.kubernetes.io/name: monitoring-operator
+    app.kubernetes.io/name: gnmi-exporter
     app.kubernetes.io/managed-by: kustomize
     topology.kubernetes.io/region: eu-de-1
     topology.kubernetes.io/zone: eu-de-1a
@@ -32,7 +32,7 @@ apiVersion: networking.metal.ironcore.dev/v1alpha1
 kind: Device
 metadata:
   labels:
-    app.kubernetes.io/name: monitoring-operator
+    app.kubernetes.io/name: gnmi-exporter
     app.kubernetes.io/managed-by: kustomize
     topology.kubernetes.io/region: eu-de-1
     topology.kubernetes.io/zone: eu-de-1a
@@ -48,7 +48,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   labels:
-    app.kubernetes.io/name: monitoring-operator
+    app.kubernetes.io/name: gnmi-exporter
     app.kubernetes.io/managed-by: kustomize
   name: secret-basic-auth
   namespace: default

@@ -16,7 +16,7 @@ manager:
   replicas: 1
 
   image:
-    repository: ghcr.io/cobaltcore-dev/monitoring-operator
+    repository: ghcr.io/cobaltcore-dev/gnmi-exporter
     tag: latest
     pullPolicy: IfNotPresent
 

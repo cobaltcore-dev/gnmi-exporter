@@ -3,12 +3,12 @@
 layout: home
 
 hero:
-    name: 'Monitoring Operator'
+    name: 'gNMI Exporter'
     text: 'Cloud Native Network Device Monitoring'
     tagline: 'A Kubernetes operator for automating the monitoring of network devices using gNMI telemetry'
     image:
         src: https://raw.githubusercontent.com/ironcore-dev/ironcore/refs/heads/main/docs/assets/logo_borderless.svg
-        alt: Monitoring Operator
+        alt: gNMI Exporter
     actions:
         - theme: brand
           text: Overview

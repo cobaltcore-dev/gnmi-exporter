@@ -9,8 +9,8 @@ plugins:
   helm.kubebuilder.io/v2-alpha:
     manifests: dist/install.yaml
     output: charts
-projectName: monitoring-operator
-repo: github.com/cobaltcore-dev/monitoring-operator
+projectName: gnmi-exporter
+repo: github.com/cobaltcore-dev/gnmi-exporter
 resources:
 - api:
     crdVersion: v1
@@ -19,6 +19,6 @@ resources:
   domain: networking.cloud.sap
   group: monitoring
   kind: DeviceMonitor
-  path: github.com/cobaltcore-dev/monitoring-operator/api/v1alpha1
+  path: github.com/cobaltcore-dev/gnmi-exporter/api/v1alpha1
   version: v1alpha1
 version: "3"

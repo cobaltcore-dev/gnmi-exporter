@@ -1,6 +1,6 @@
 apiVersion: v2
-name: monitoring-operator
-description: A Helm chart to distribute monitoring-operator
+name: gnmi-exporter
+description: A Helm chart to distribute gnmi-exporter
 type: application
 version: 0.0.0+dev
 keywords:
