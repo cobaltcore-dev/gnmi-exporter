@@ -11,7 +11,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects.
-	GroupVersion = schema.GroupVersion{Group: "monitoring.networking.cloud.sap", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "monitoring.wire.cobaltcore.dev", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = runtime.NewSchemeBuilder(func(s *runtime.Scheme) error {
@@ -25,7 +25,7 @@ var (
 
 // DeviceMonitorLabel is a label applied to any API object to indicate the DeviceMonitor
 // that created and owns the object.
-const DeviceMonitorLabel = "monitoring.networking.cloud.sap/monitor-name"
+const DeviceMonitorLabel = "monitoring.wire.cobaltcore.dev/monitor-name"
 
 // Condition types that are used across different objects.
 const (

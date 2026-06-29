@@ -21,7 +21,7 @@ helm install gnmi-exporter \
 A `DeviceMonitor` selects network devices by label and configures gNMI subscriptions for telemetry collection:
 
 ```yaml
-apiVersion: monitoring.networking.cloud.sap/v1alpha1
+apiVersion: monitoring.wire.cobaltcore.dev/v1alpha1
 kind: DeviceMonitor
 metadata:
   name: spine-monitor
@@ -29,7 +29,7 @@ spec:
   replicas: 2
   deviceSelector:
     matchLabels:
-      networking.metal.ironcore.dev/device-role: evpn-spine
+      wire.cobaltcore.dev/device-role: evpn-spine
   template:
     spec:
       nodeSelector:

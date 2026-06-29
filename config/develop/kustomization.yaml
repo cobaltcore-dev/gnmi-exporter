@@ -1,7 +1,7 @@
 resources:
 - ../default
 - ../prometheus
-- crd/networking.cloud.sap_devices.yaml
+- crd/networking.metal.ironcore.dev_devices.yaml
 
 patches:
  - path: manager_patch.yaml

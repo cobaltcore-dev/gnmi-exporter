@@ -44,7 +44,7 @@ var templates = template.Must(template.ParseFS(templateFS, "templates/*.tmpl"))
 
 // SecretChecksumAnnotation is the annotation key used to store the checksum of the Secret data.
 // It is used to trigger a rolling update of the StatefulSet when the Secret data changes.
-const SecretChecksumAnnotation = "monitoring.networking.cloud.sap/secret-checksum"
+const SecretChecksumAnnotation = "monitoring.wire.cobaltcore.dev/secret-checksum"
 
 // DeviceMonitorReconciler reconciles a DeviceMonitor object
 type DeviceMonitorReconciler struct {
@@ -59,9 +59,9 @@ type DeviceMonitorReconciler struct {
 	GNMIcImage string
 }
 
-// +kubebuilder:rbac:groups=monitoring.networking.cloud.sap,resources=devicemonitors,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=monitoring.networking.cloud.sap,resources=devicemonitors/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=monitoring.networking.cloud.sap,resources=devicemonitors/finalizers,verbs=update
+// +kubebuilder:rbac:groups=monitoring.wire.cobaltcore.dev,resources=devicemonitors,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=monitoring.wire.cobaltcore.dev,resources=devicemonitors/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=monitoring.wire.cobaltcore.dev,resources=devicemonitors/finalizers,verbs=update
 
 // +kubebuilder:rbac:groups=events.k8s.io,resources=events,verbs=create;patch
 

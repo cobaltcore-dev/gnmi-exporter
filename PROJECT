@@ -2,7 +2,7 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: networking.cloud.sap
+domain: wire.cobaltcore.dev
 layout:
 - go.kubebuilder.io/v4
 plugins:
@@ -16,7 +16,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: networking.cloud.sap
+  domain: wire.cobaltcore.dev
   group: monitoring
   kind: DeviceMonitor
   path: github.com/cobaltcore-dev/gnmi-exporter/api/v1alpha1
