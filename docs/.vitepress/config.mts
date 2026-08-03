@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url'
 export default withMermaid({
     title: 'gNMI Exporter',
     description: 'Cloud Native Network Device Monitoring',
+    base: '/gnmi-exporter/',
     head: [
         [
             'link',
