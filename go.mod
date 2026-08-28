@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/ironcore-dev/network-operator v0.0.0-20260827141248-8b663636dd80
 	github.com/onsi/ginkgo/v2 v2.32.1
-	github.com/onsi/gomega v1.42.1
+	github.com/onsi/gomega v1.43.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.93.1
 	go.uber.org/automaxprocs v1.6.0
 	go.uber.org/zap v1.28.0
