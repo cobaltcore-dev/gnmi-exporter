@@ -31,7 +31,7 @@ jobs:
         uses: helm/kind-action@v1
         with:
           version: v0.33.0
-          kubectl_version: v1.37.1
+          kubectl_version: v1.37.2
           cluster_name: kind
       - name: Prepare gnmi-exporter
         run: |
